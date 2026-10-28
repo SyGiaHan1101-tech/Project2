@@ -139,7 +139,9 @@ void Menu::showEmployeeMenu(string username) {
 
             file.close();
 
+            setColor(14);
             cout << "\n===== THONG TIN CA NHAN =====\n";
+            setColor(7);
             cout << "Ho ten: " << hoTen << "\n";
             cout << "Dia chi: " << diaChi << "\n";
             cout << "So dien thoai: " << soDienThoai << "\n";
