@@ -6,15 +6,16 @@
 
 using namespace std;
 
-vector<Employee> FileManager::docDanhSachNhanVien()
+bool FileManager::docDanhSachNhanVien(vector<Employee>& ds)
 {
-    vector<Employee> ds;
+    ds.clear();
+
     ifstream file("Employees.txt");
 
     if (!file.is_open())
     {
         cerr << "Loi: Khong mo duoc Employees.txt!\n";
-        return ds;
+        return false;
     }
 
     string username, password;
@@ -25,7 +26,7 @@ vector<Employee> FileManager::docDanhSachNhanVien()
         if (status != 0 && status != 1)
         {
             cerr << "Loi: Trang thai nhan vien khong hop le!\n";
-            return {};
+            return false;
         }
 
         Employee nv(username, password, "", "", "", "", status);
@@ -33,17 +34,21 @@ vector<Employee> FileManager::docDanhSachNhanVien()
         if (!docHoSoNhanVien(nv))
         {
             cerr << "Loi: Khong doc duoc ho so: "
-                << nv.getUsername() << ".txt\n";
-            cerr << "Khong the tiep tuc doc danh sach de tranh mat du lieu!\n";
-            file.close();
-            return {};
+                << username << ".txt\n";
+            cerr << "Da huy thao tac de tranh mat du lieu!\n";
+            return false;
         }
 
         ds.push_back(nv);
     }
 
-    file.close();
-    return ds;
+    if (!file.eof())
+    {
+        cerr << "Loi: Du lieu Employees.txt khong hop le!\n";
+        return false;
+    }
+
+    return true;
 }
 
 bool FileManager::ghiDanhSachNhanVien(const vector<Employee>& ds)

@@ -11,7 +11,6 @@ public:
     bool employeeLogin(std::string& username);
     bool isUsernameExists(std::string username);
     bool changePassword(std::string username);
-    bool saveAccounts();
 };
 
 #endif

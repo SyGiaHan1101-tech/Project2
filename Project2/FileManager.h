@@ -9,6 +9,7 @@
 class FileManager {
 public:
     static std::vector<Employee> docDanhSachNhanVien();
+    static bool docDanhSachNhanVien(std::vector<Employee>& ds);
     static bool ghiDanhSachNhanVien(const std::vector<Employee>& ds);
     static bool docHoSoNhanVien(Employee& nv);
     static bool ghiHoSoNhanVien(const Employee& nv);

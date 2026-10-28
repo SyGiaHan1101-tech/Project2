@@ -44,8 +44,13 @@ static bool usernameHopLe(const string& username)
 
 void EmployeeManager::themNhanVien()
 {
-    vector<Employee> ds =
-        FileManager::docDanhSachNhanVien();
+    vector<Employee> ds;
+
+    if (!FileManager::docDanhSachNhanVien(ds))
+    {
+        cout << "Loi doc danh sach! Da huy thao tac them.\n";
+        return;
+    }
 
     string username;
 
@@ -95,8 +100,13 @@ void EmployeeManager::themNhanVien()
 
 void EmployeeManager::xoaNhanVien()
 {
-    vector<Employee> ds =
-        FileManager::docDanhSachNhanVien();
+    vector<Employee> ds;
+
+    if (!FileManager::docDanhSachNhanVien(ds))
+    {
+        cout << "Loi doc danh sach! Da huy thao tac.\n";
+        return;
+    }
     if (ds.empty())
     {
         cout << "Danh sach rong hoac co loi doc file!\n";
@@ -175,8 +185,13 @@ void EmployeeManager::xoaNhanVien()
 
 void EmployeeManager::timNhanVien()
 {
-    vector<Employee> ds =
-        FileManager::docDanhSachNhanVien();
+    vector<Employee> ds;
+
+    if (!FileManager::docDanhSachNhanVien(ds))
+    {
+        cout << "Loi doc danh sach! Da huy thao tac.\n";
+        return;
+    }
 
     string username;
 
@@ -200,8 +215,13 @@ void EmployeeManager::timNhanVien()
 
 void EmployeeManager::capNhatNhanVien()
 {
-    vector<Employee> ds =
-        FileManager::docDanhSachNhanVien();
+    vector<Employee> ds;
+
+    if (!FileManager::docDanhSachNhanVien(ds))
+    {
+        cout << "Loi doc danh sach! Da huy thao tac.\n";
+        return;
+    }
     if (ds.empty())
     {
         cout << "Danh sach rong hoac co loi doc file!\n";
@@ -305,8 +325,13 @@ void EmployeeManager::capNhatNhanVien()
 
 void EmployeeManager::hienThiDanhSach()
 {
-    vector<Employee> ds =
-        FileManager::docDanhSachNhanVien();
+    vector<Employee> ds;
+
+    if (!FileManager::docDanhSachNhanVien(ds))
+    {
+        cout << "Loi doc danh sach! Da huy thao tac.\n";
+        return;
+    }
 
     sapXepTheoUsername(ds);
 

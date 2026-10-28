@@ -1,4 +1,4 @@
-
+#include <cstdio>
 #include "AccountManager.h"
 
 #include <iostream>
@@ -174,11 +174,57 @@ bool AccountManager::changePassword(string username) {
         return false;
     }
 
-    ofstream outFile("Employees.txt");
-    if (!outFile.is_open()) {
+    ofstream outFile("Employees.tmp");
+
+    if (!outFile.is_open())
+    {
+        cout << "Khong the tao file tam!\n";
+        return false;
+    }
+
+    for (size_t i = 0; i < accounts.size(); i++)
+    {
+        if (accounts[i].getUsername() == username)
+        {
+            outFile << accounts[i].getUsername() << " "
+                << newPassword << " 0\n";
+        }
+        else
+        {
+            outFile << accounts[i].getUsername() << " "
+                << accounts[i].getPassword() << " "
+                << statuses[i] << "\n";
+        }
+    }
+
+    outFile.close();
+
+    if (outFile.fail())
+    {
+        remove("Employees.tmp");
+        cout << "Loi ghi file tam!\n";
+        return false;
+    }
+
+    if (rename("Employees.txt", "Employees.bak") != 0)
+    {
+        remove("Employees.tmp");
+        cout << "Khong the sao luu file cu!\n";
+        return false;
+    }
+
+    if (rename("Employees.tmp", "Employees.txt") != 0)
+    {
+        rename("Employees.bak", "Employees.txt");
+        remove("Employees.tmp");
         cout << "Khong the cap nhat file!\n";
         return false;
     }
+
+    remove("Employees.bak");
+
+    cout << "Doi mat khau thanh cong!\n";
+    return true;
 
     for (size_t i = 0; i < accounts.size(); i++) {
         if (accounts[i].getUsername() == username) {
@@ -204,7 +250,4 @@ bool AccountManager::changePassword(string username) {
     return true;
 }
 
-bool AccountManager::saveAccounts() {
-    cout << "Chuc nang luu tai khoan se duoc ket noi sau.\n";
-    return false;
-}
+
