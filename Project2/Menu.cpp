@@ -132,10 +132,27 @@ void Menu::showEmployeeMenu(string username) {
 
             string hoTen, diaChi, soDienThoai, email;
 
-            getline(file, hoTen);
-            getline(file, diaChi);
-            getline(file, soDienThoai);
-            getline(file, email);
+            if (!getline(file, hoTen) ||
+                !getline(file, diaChi) ||
+                !getline(file, soDienThoai) ||
+                !getline(file, email)) {
+                cout << "File thong tin nhan vien bi thieu du lieu!\n";
+                file.close();
+                break;
+            }
+
+            string dongThua;
+            if (getline(file, dongThua)) {
+                cout << "File thong tin nhan vien co du lieu thua!\n";
+                file.close();
+                break;
+            }
+
+            if (file.bad()) {
+                cout << "Loi khi doc file thong tin nhan vien!\n";
+                file.close();
+                break;
+            }
 
             file.close();
 

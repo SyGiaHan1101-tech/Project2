@@ -1,3 +1,4 @@
+#include <fstream>
 #include "ConsoleColor.h"
 #include "EmployeeManager.h"
 #include "TemplateUtils.h"
@@ -11,6 +12,81 @@
 #include <cctype>
 
 using namespace std;
+
+
+static string chuanHoaHoTen(const string& hoTen)
+{
+    string ketQua;
+    bool dauTu = true;
+
+    for (size_t i = 0; i < hoTen.length(); i++)
+    {
+        unsigned char ch =
+            static_cast<unsigned char>(hoTen[i]);
+
+        if (isspace(ch))
+        {
+            if (!ketQua.empty() && ketQua.back() != ' ')
+                ketQua += ' ';
+
+            dauTu = true;
+        }
+        else
+        {
+            ketQua += static_cast<char>(
+                dauTu ? toupper(ch) : tolower(ch)
+                );
+            dauTu = false;
+        }
+    }
+
+    if (!ketQua.empty() && ketQua.back() == ' ')
+        ketQua.pop_back();
+
+    return ketQua;
+}
+
+static bool soDienThoaiHopLe(const string& sdt)
+{
+    if (sdt.length() != 10)
+        return false;
+
+    for (size_t i = 0; i < sdt.length(); i++)
+    {
+        if (!isdigit(static_cast<unsigned char>(sdt[i])))
+            return false;
+    }
+
+    return true;
+}
+
+static bool emailHopLe(const string& email)
+{
+    size_t at = email.find('@');
+
+    if (at == string::npos || at == 0 ||
+        at == email.length() - 1)
+        return false;
+
+    if (email.find('@', at + 1) != string::npos)
+        return false;
+
+    size_t cham = email.find('.', at + 1);
+
+    if (cham == string::npos ||
+        cham == at + 1 ||
+        cham == email.length() - 1)
+        return false;
+
+    for (size_t i = 0; i < email.length(); i++)
+    {
+        if (isspace(static_cast<unsigned char>(email[i])))
+            return false;
+    }
+
+    return true;
+}
+
 
 // Username khong duoc co khoang trang hoac ky tu duong dan.
 static bool usernameHopLe(const string& username)
@@ -42,6 +118,7 @@ static bool usernameHopLe(const string& username)
     return true;
 }
 
+
 void EmployeeManager::themNhanVien()
 {
     vector<Employee> ds;
@@ -72,13 +149,59 @@ void EmployeeManager::themNhanVien()
         return;
     }
 
-    // Mat khau mac dinh 111111, bat buoc doi lan dau.
     Employee nv(username, "111111", "", "", "", "", 1);
 
     cout << "\nNhap thong tin nhan vien:\n";
-    nv.nhapThongTinCaNhan();
 
-    // Tao file ho so truoc.
+    string hoTen, diaChi, sdt, email;
+
+    cout << "Nhap ho ten: ";
+    getline(cin, hoTen);
+    hoTen = chuanHoaHoTen(hoTen);
+
+    while (hoTen.empty())
+    {
+        cout << "Ho ten khong duoc de trong! Nhap lai: ";
+        getline(cin, hoTen);
+        hoTen = chuanHoaHoTen(hoTen);
+    }
+
+    cout << "Nhap dia chi: ";
+    getline(cin, diaChi);
+    diaChi = chuanHoaHoTen(diaChi);
+
+    cout << "Nhap so dien thoai: ";
+    getline(cin, sdt);
+
+    while (!soDienThoaiHopLe(sdt))
+    {
+        cout << "So dien thoai phai gom dung 10 chu so! Nhap lai: ";
+        getline(cin, sdt);
+    }
+
+    cout << "Nhap email: ";
+    getline(cin, email);
+
+    while (!emailHopLe(email))
+    {
+        cout << "Email khong hop le! Nhap lai: ";
+        getline(cin, email);
+    }
+
+    nv.setFullName(hoTen);
+    nv.setAddress(diaChi);
+    nv.setPhone(sdt);
+    nv.setEmail(email);
+
+    // Kiem tra file ho so da ton tai chua
+    ifstream fileHoSo(username + ".txt");
+    if (fileHoSo.is_open())
+    {
+        fileHoSo.close();
+        cout << "File ho so da ton tai! Khong the them nhan vien.\n";
+        return;
+    }
+
     if (!FileManager::ghiHoSoNhanVien(nv))
     {
         cout << "Khong tao duoc file ho so!\n";
@@ -97,6 +220,7 @@ void EmployeeManager::themNhanVien()
     cout << "Them nhan vien thanh cong!\n";
     cout << "Mat khau mac dinh: 111111\n";
 }
+
 
 void EmployeeManager::xoaNhanVien()
 {
@@ -282,29 +406,62 @@ void EmployeeManager::capNhatNhanVien()
 
         string value;
 
+
         switch (choice)
         {
         case 1:
             cout << "Nhap ho ten moi: ";
             getline(cin, value);
+            value = chuanHoaHoTen(value);
+
+            while (value.empty())
+            {
+                cout << "Ho ten khong duoc de trong! Nhap lai: ";
+                getline(cin, value);
+                value = chuanHoaHoTen(value);
+            }
+
             nv.setFullName(value);
             break;
 
         case 2:
             cout << "Nhap dia chi moi: ";
             getline(cin, value);
+            value = chuanHoaHoTen(value);
+
+            while (value.empty())
+            {
+                cout << "Dia chi khong duoc de trong! Nhap lai: ";
+                getline(cin, value);
+                value = chuanHoaHoTen(value);
+            }
+
             nv.setAddress(value);
             break;
 
         case 3:
             cout << "Nhap so dien thoai moi: ";
             getline(cin, value);
+
+            while (!soDienThoaiHopLe(value))
+            {
+                cout << "So dien thoai phai gom dung 10 chu so! Nhap lai: ";
+                getline(cin, value);
+            }
+
             nv.setPhone(value);
             break;
 
         case 4:
             cout << "Nhap email moi: ";
             getline(cin, value);
+
+            while (!emailHopLe(value))
+            {
+                cout << "Email khong hop le! Nhap lai: ";
+                getline(cin, value);
+            }
+
             nv.setEmail(value);
             break;
 
@@ -314,6 +471,7 @@ void EmployeeManager::capNhatNhanVien()
         default:
             cout << "Lua chon khong hop le!\n";
         }
+
 
     } while (choice != 0);
 

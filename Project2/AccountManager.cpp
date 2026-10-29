@@ -9,19 +9,30 @@
 using namespace std;
 
 // Nhap mat khau va hien dau *
-string inputPassword() {
-    string password;
-    char ch;
 
-    while ((ch = _getch()) != '\r') {
-        if (ch == '\b') {
-            if (!password.empty()) {
+string inputPassword()
+{
+    string password;
+    int ch;
+
+    while ((ch = _getch()) != '\r')
+    {
+        if (ch == '\b')
+        {
+            if (!password.empty())
+            {
                 password.pop_back();
                 cout << "\b \b";
             }
         }
-        else {
-            password += ch;
+        else if (ch == 0 || ch == 224)
+        {
+            // Bo qua phim dieu khien nhu mui ten.
+            _getch();
+        }
+        else if (ch >= 32 && ch <= 126)
+        {
+            password += static_cast<char>(ch);
             cout << '*';
         }
     }
@@ -29,6 +40,7 @@ string inputPassword() {
     cout << '\n';
     return password;
 }
+
 
 bool AccountManager::adminLogin() {
     string username;
@@ -58,42 +70,95 @@ bool AccountManager::adminLogin() {
     return false;
 }
 
-bool AccountManager::employeeLogin(string& username) {
-    string password;
+
+bool AccountManager::employeeLogin(string& username)
+{
     int attempts = 0;
 
-    while (attempts < 3) {
+    while (attempts < 3)
+    {
         cout << "Nhap username nhan vien: ";
         cin >> username;
 
-        cout << "Nhap password: ";
-        password = inputPassword();
-
         ifstream file("Employees.txt");
-        if (!file.is_open()) {
+        if (!file.is_open())
+        {
             cout << "Khong mo duoc file Employees.txt!\n";
             return false;
         }
 
         string savedUsername, savedPassword;
-        int mustChangePassword;
-        bool found = false;
+        int status;
+        bool usernameExists = false;
+        bool dataError = false;
+        vector<Account> accounts;
+        vector<int> statuses;
 
-        while (file >> savedUsername >> savedPassword >> mustChangePassword) {
-            if (savedUsername == username && savedPassword == password) {
-                found = true;
+        while (file >> savedUsername >> savedPassword >> status)
+        {
+            if (status != 0 && status != 1)
+            {
+                dataError = true;
                 break;
             }
+
+            accounts.push_back(Account(savedUsername, savedPassword));
+            statuses.push_back(status);
+
+            if (savedUsername == username)
+            {
+                usernameExists = true;
+            }
+        }
+
+        if (!file.eof())
+        {
+            dataError = true;
         }
 
         file.close();
 
-        if (found) {
+        if (dataError)
+        {
+            cout << "Du lieu Employees.txt khong hop le!\n";
+            return false;
+        }
+
+        if (!usernameExists)
+        {
+            attempts++;
+            cout << "Tai khoan khong ton tai!\n";
+            cout << "Con " << 3 - attempts << " lan thu.\n";
+            continue;
+        }
+
+        cout << "Nhap password: ";
+        string password = inputPassword();
+
+        bool found = false;
+        int accountStatus = 0;
+
+        for (size_t i = 0; i < accounts.size(); i++)
+        {
+            if (accounts[i].getUsername() == username &&
+                accounts[i].getPassword() == password)
+            {
+                found = true;
+                accountStatus = statuses[i];
+                break;
+            }
+        }
+
+        if (found)
+        {
             cout << "Dang nhap nhan vien thanh cong!\n";
 
-            if (mustChangePassword == 1) {
+            if (accountStatus == 1)
+            {
                 cout << "Ban phai doi mat khau trong lan dang nhap dau tien!\n";
-                if (!changePassword(username)) {
+
+                if (!changePassword(username))
+                {
                     return false;
                 }
             }
@@ -102,18 +167,22 @@ bool AccountManager::employeeLogin(string& username) {
         }
 
         attempts++;
-        cout << "Sai thong tin dang nhap! Con "
-            << 3 - attempts << " lan thu.\n";
+        cout << "Sai mat khau!\n";
+        cout << "Con " << 3 - attempts << " lan thu.\n";
     }
 
     cout << "Ban da nhap sai 3 lan. Thoat!\n";
     return false;
 }
 
+
+
 bool AccountManager::isUsernameExists(string username) {
     ifstream file("Employees.txt");
+
     if (!file.is_open()) {
-        return false;
+        cout << "Khong mo duoc file Employees.txt!\n";
+        return true;
     }
 
     string savedUsername, savedPassword;
@@ -125,8 +194,14 @@ bool AccountManager::isUsernameExists(string username) {
         }
     }
 
+    if (!file.eof()) {
+        cout << "Du lieu Employees.txt khong hop le!\n";
+        return true;
+    }
+
     return false;
 }
+
 
 bool AccountManager::changePassword(string username) {
     string oldPassword, newPassword, confirmPassword;
@@ -147,13 +222,30 @@ bool AccountManager::changePassword(string username) {
     int status;
     bool found = false;
 
-    while (inFile >> savedUsername >> savedPassword >> status) {
-        if (savedUsername == username && savedPassword == oldPassword) {
+
+    while (inFile >> savedUsername >> savedPassword >> status)
+    {
+        if (status != 0 && status != 1)
+        {
+            cout << "Trang thai tai khoan khong hop le!\n";
+            inFile.close();
+            return false;
+        }
+
+        if (savedUsername == username && savedPassword == oldPassword)
+        {
             found = true;
         }
 
         accounts.push_back(Account(savedUsername, savedPassword));
         statuses.push_back(status);
+    }
+
+    if (!inFile.eof())
+    {
+        cout << "Du lieu Employees.txt khong hop le!\n";
+        inFile.close();
+        return false;
     }
 
     inFile.close();
@@ -184,7 +276,8 @@ bool AccountManager::changePassword(string username) {
 
     for (size_t i = 0; i < accounts.size(); i++)
     {
-        if (accounts[i].getUsername() == username)
+        if (accounts[i].getUsername() == username &&
+            accounts[i].getPassword() == oldPassword)
         {
             outFile << accounts[i].getUsername() << " "
                 << newPassword << " 0\n";
@@ -222,29 +315,6 @@ bool AccountManager::changePassword(string username) {
     }
 
     remove("Employees.bak");
-
-    cout << "Doi mat khau thanh cong!\n";
-    return true;
-
-    for (size_t i = 0; i < accounts.size(); i++) {
-        if (accounts[i].getUsername() == username) {
-            outFile << accounts[i].getUsername() << " "
-                << newPassword << " 0\n";
-        }
-        else {
-            outFile << accounts[i].getUsername() << " "
-                << accounts[i].getPassword() << " "
-                << statuses[i] << "\n";
-        }
-    }
-
-    outFile.close();
-
-    if (outFile.fail())
-    {
-        cout << "Loi khi ghi file Employees.txt!\n";
-        return false;
-    }
 
     cout << "Doi mat khau thanh cong!\n";
     return true;
