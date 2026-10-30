@@ -13,7 +13,7 @@ public:
     static bool docHoSoNhanVien(Employee& nv);
     static bool ghiHoSoNhanVien(const Employee& nv);
     static bool xoaHoSoNhanVien(const std::string& username);
-    static bool kiemTraUsername(const std::string& username);
+    static int kiemTraUsername(const std::string& username);
 };
 
 #endif

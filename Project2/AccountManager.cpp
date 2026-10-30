@@ -1,6 +1,6 @@
 #include <cstdio>
 #include "AccountManager.h"
-
+#include <filesystem>
 #include <iostream>
 #include <fstream>
 #include <vector>
@@ -10,7 +10,7 @@ using namespace std;
 
 // Nhap mat khau va hien dau *
 
-string inputPassword()
+static string inputPassword()
 {
     string password;
     int ch;
@@ -299,6 +299,23 @@ bool AccountManager::changePassword(string username) {
         return false;
     }
 
+    std::error_code ec;
+    bool backupTonTai = std::filesystem::exists("Employees.bak", ec);
+
+    if (ec)
+    {
+        remove("Employees.tmp");
+        cout << "Khong the kiem tra file backup!\n";
+        return false;
+    }
+
+    if (backupTonTai)
+    {
+        remove("Employees.tmp");
+        cout << "Employees.bak da ton tai! Vui long kiem tra file backup.\n";
+        return false;
+    }
+
     if (rename("Employees.txt", "Employees.bak") != 0)
     {
         remove("Employees.tmp");
@@ -308,7 +325,9 @@ bool AccountManager::changePassword(string username) {
 
     if (rename("Employees.tmp", "Employees.txt") != 0)
     {
-        rename("Employees.bak", "Employees.txt");
+        if (rename("Employees.bak", "Employees.txt") != 0)
+            cout << "Khong the khoi phuc file cu!\n";
+
         remove("Employees.tmp");
         cout << "Khong the cap nhat file!\n";
         return false;

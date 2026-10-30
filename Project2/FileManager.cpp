@@ -1,9 +1,9 @@
-
+#include <filesystem>
 #include "FileManager.h"
 #include <iostream>
 #include <fstream>
 #include <cstdio>
-
+#include <sstream>
 using namespace std;
 
 bool FileManager::docDanhSachNhanVien(vector<Employee>& ds)
@@ -18,14 +18,31 @@ bool FileManager::docDanhSachNhanVien(vector<Employee>& ds)
         return false;
     }
 
-    string username, password;
-    int status;
+    string line;
 
-    while (file >> username >> password >> status)
+    while (getline(file, line))
     {
+        if (line.empty())
+            continue;
+
+        string username, password;
+        int status;
+        string duLieuThua;
+
+        istringstream iss(line);
+
+        if (!(iss >> username >> password >> status) ||
+            (iss >> duLieuThua))
+        {
+            cerr << "Loi: Du lieu Employees.txt khong hop le!\n";
+            ds.clear();
+            return false;
+        }
+
         if (status != 0 && status != 1)
         {
             cerr << "Loi: Trang thai nhan vien khong hop le!\n";
+            ds.clear();
             return false;
         }
 
@@ -36,15 +53,17 @@ bool FileManager::docDanhSachNhanVien(vector<Employee>& ds)
             cerr << "Loi: Khong doc duoc ho so: "
                 << username << ".txt\n";
             cerr << "Da huy thao tac de tranh mat du lieu!\n";
+            ds.clear();
             return false;
         }
 
         ds.push_back(nv);
     }
 
-    if (!file.eof())
+    if (file.bad())
     {
-        cerr << "Loi: Du lieu Employees.txt khong hop le!\n";
+        cerr << "Loi: Khong doc duoc Employees.txt!\n";
+        ds.clear();
         return false;
     }
 
@@ -91,9 +110,26 @@ bool FileManager::ghiDanhSachNhanVien(const vector<Employee>& ds)
 
     fileCu.close();
 
-    // Chuyen file cu sang file backup.
-    remove("Employees.bak");
+    // Kiem tra file backup cu.
+    std::error_code ec;
+    bool backupTonTai = std::filesystem::exists("Employees.bak", ec);
 
+    if (ec)
+    {
+        remove("Employees.tmp");
+        cerr << "Loi: Khong the kiem tra Employees.bak!\n";
+        return false;
+    }
+
+    if (backupTonTai)
+    {
+        remove("Employees.tmp");
+        cerr << "Loi: Employees.bak da ton tai!\n";
+        cerr << "Vui long kiem tra file backup truoc khi tiep tuc.\n";
+        return false;
+    }
+
+    // Chuyen file cu sang file backup.
     if (rename("Employees.txt", "Employees.bak") != 0)
     {
         remove("Employees.tmp");
@@ -166,7 +202,11 @@ bool FileManager::docHoSoNhanVien(Employee& nv)
 bool FileManager::ghiHoSoNhanVien(const Employee& nv)
 {
     string filename = nv.getUsername() + ".txt";
-    ofstream file(filename);
+    string fileTam = filename + ".tmp";
+    string fileBackup = filename + ".bak";
+
+    // Ghi du lieu vao file tam.
+    ofstream file(fileTam, ios::trunc);
 
     if (!file.is_open())
         return false;
@@ -177,7 +217,61 @@ bool FileManager::ghiHoSoNhanVien(const Employee& nv)
     file << nv.getEmail() << '\n';
 
     file.close();
-    return !file.fail();
+
+    if (file.fail())
+    {
+        remove(fileTam.c_str());
+        return false;
+    }
+
+    // Kiem tra file ho so cu co ton tai khong.
+    ifstream fileCu(filename);
+
+    if (!fileCu.is_open())
+    {
+        // Neu chua co file cu, tao file moi tu file tam.
+        if (rename(fileTam.c_str(), filename.c_str()) != 0)
+        {
+            remove(fileTam.c_str());
+            return false;
+        }
+
+        return true;
+    }
+
+    fileCu.close();
+
+    // Kiem tra file backup da ton tai chua.
+    ifstream fileKiemTra(fileBackup);
+
+    if (fileKiemTra.is_open())
+    {
+        fileKiemTra.close();
+        remove(fileTam.c_str());
+        cerr << "File backup da ton tai!\n";
+        return false;
+    }
+
+    // Sao luu file cu.
+    if (rename(filename.c_str(), fileBackup.c_str()) != 0)
+    {
+        remove(fileTam.c_str());
+        return false;
+    }
+
+    // Dua file moi vao vi tri file chinh.
+    if (rename(fileTam.c_str(), filename.c_str()) != 0)
+    {
+        if (rename(fileBackup.c_str(), filename.c_str()) != 0)
+            cerr << "CANH BAO: Khong khoi phuc duoc file ho so cu!\n";
+
+        remove(fileTam.c_str());
+        return false;
+    }
+
+    remove(fileBackup.c_str());
+
+    return true;
 }
 
 bool FileManager::xoaHoSoNhanVien(const string& username)
@@ -194,37 +288,52 @@ bool FileManager::xoaHoSoNhanVien(const string& username)
 
 
 
-bool FileManager::kiemTraUsername(const string& username)
+int FileManager::kiemTraUsername(const string& username)
 {
     ifstream file("Employees.txt");
 
     if (!file.is_open())
     {
         cerr << "Loi: Khong mo duoc Employees.txt!\n";
-        return true;
+        return -1;
     }
 
-    string savedUsername, savedPassword;
-    int status;
+    string line;
 
-    while (file >> savedUsername >> savedPassword >> status)
+    while (getline(file, line))
     {
+        if (line.empty())
+            continue;
+
+        string savedUsername, savedPassword;
+        string duLieuThua;
+        int status;
+
+        istringstream iss(line);
+
+        if (!(iss >> savedUsername >> savedPassword >> status) ||
+            (iss >> duLieuThua))
+        {
+            cerr << "Loi: Du lieu Employees.txt khong hop le!\n";
+            return -1;
+        }
+
         if (status != 0 && status != 1)
         {
             cerr << "Loi: Trang thai nhan vien khong hop le!\n";
-            return true;
+            return -1;
         }
 
         if (savedUsername == username)
-            return true;
+            return 1;
     }
 
-    if (!file.eof())
+    if (file.bad())
     {
-        cerr << "Loi: Du lieu Employees.txt khong hop le!\n";
-        return true;
+        cerr << "Loi: Khong doc duoc Employees.txt!\n";
+        return -1;
     }
 
-    return false;
+    return 0;
 }
 

@@ -8,7 +8,6 @@
 class Menu {
 public:
     void run();
-    void showMainMenu();
     void showAdminMenu();
     void showEmployeeMenu(std::string username);
 

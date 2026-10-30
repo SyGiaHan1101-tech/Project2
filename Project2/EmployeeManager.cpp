@@ -17,26 +17,28 @@ using namespace std;
 static string chuanHoaHoTen(const string& hoTen)
 {
     string ketQua;
-    bool dauTu = true;
+    bool vietHoa = true;
 
-    for (size_t i = 0; i < hoTen.length(); i++)
+    for (char c : hoTen)
     {
-        unsigned char ch =
-            static_cast<unsigned char>(hoTen[i]);
+        unsigned char ch = static_cast<unsigned char>(c);
 
         if (isspace(ch))
         {
             if (!ketQua.empty() && ketQua.back() != ' ')
+            {
                 ketQua += ' ';
-
-            dauTu = true;
+                vietHoa = true;
+            }
         }
         else
         {
-            ketQua += static_cast<char>(
-                dauTu ? toupper(ch) : tolower(ch)
-                );
-            dauTu = false;
+            if (vietHoa)
+                ketQua += static_cast<char>(toupper(ch));
+            else
+                ketQua += static_cast<char>(tolower(ch));
+
+            vietHoa = false;
         }
     }
 
@@ -54,6 +56,27 @@ static bool soDienThoaiHopLe(const string& sdt)
     for (size_t i = 0; i < sdt.length(); i++)
     {
         if (!isdigit(static_cast<unsigned char>(sdt[i])))
+            return false;
+    }
+
+    return true;
+}
+
+static string chuanHoaDiaChi(const string& diaChi)
+{
+    return chuanHoaHoTen(diaChi);
+}
+
+static bool hoTenHopLe(const string& hoTen)
+{
+    if (hoTen.empty())
+        return false;
+
+    for (char c : hoTen)
+    {
+        unsigned char ch = static_cast<unsigned char>(c);
+
+        if (!isalpha(ch) && !isspace(ch))
             return false;
     }
 
@@ -143,9 +166,17 @@ void EmployeeManager::themNhanVien()
         return;
     }
 
-    if (FileManager::kiemTraUsername(username))
+    int ketQua = FileManager::kiemTraUsername(username);
+
+    if (ketQua == 1)
     {
         cout << "Username da ton tai!\n";
+        return;
+    }
+
+    if (ketQua == -1)
+    {
+        cout << "Khong the kiem tra username! Da huy thao tac them.\n";
         return;
     }
 
@@ -159,23 +190,30 @@ void EmployeeManager::themNhanVien()
     getline(cin, hoTen);
     hoTen = chuanHoaHoTen(hoTen);
 
-    while (hoTen.empty())
+    while (!hoTenHopLe(hoTen))
     {
-        cout << "Ho ten khong duoc de trong! Nhap lai: ";
+        cout << "Ho ten khong hop le! Nhap lai: ";
         getline(cin, hoTen);
         hoTen = chuanHoaHoTen(hoTen);
     }
 
     cout << "Nhap dia chi: ";
     getline(cin, diaChi);
-    diaChi = chuanHoaHoTen(diaChi);
+    diaChi = chuanHoaDiaChi(diaChi);
+
+    while (diaChi.empty())
+    {
+        cout << "Dia chi khong duoc de trong! Nhap lai: ";
+        getline(cin, diaChi);
+        diaChi = chuanHoaDiaChi(diaChi);
+    }
 
     cout << "Nhap so dien thoai: ";
     getline(cin, sdt);
 
     while (!soDienThoaiHopLe(sdt))
     {
-        cout << "So dien thoai phai gom dung 10 chu so! Nhap lai: ";
+        cout << "So dien thoai khong hop le! Nhap lai: ";
         getline(cin, sdt);
     }
 
@@ -414,9 +452,9 @@ void EmployeeManager::capNhatNhanVien()
             getline(cin, value);
             value = chuanHoaHoTen(value);
 
-            while (value.empty())
+            while (!hoTenHopLe(value))
             {
-                cout << "Ho ten khong duoc de trong! Nhap lai: ";
+                cout << "Ho ten khong hop le! Nhap lai: ";
                 getline(cin, value);
                 value = chuanHoaHoTen(value);
             }
@@ -427,13 +465,13 @@ void EmployeeManager::capNhatNhanVien()
         case 2:
             cout << "Nhap dia chi moi: ";
             getline(cin, value);
-            value = chuanHoaHoTen(value);
+            value = chuanHoaDiaChi(value);
 
             while (value.empty())
             {
-                cout << "Dia chi khong duoc de trong! Nhap lai: ";
+                cout << "Dia chi khong hop le! Nhap lai: ";
                 getline(cin, value);
-                value = chuanHoaHoTen(value);
+                value = chuanHoaDiaChi(value);
             }
 
             nv.setAddress(value);
@@ -445,7 +483,7 @@ void EmployeeManager::capNhatNhanVien()
 
             while (!soDienThoaiHopLe(value))
             {
-                cout << "So dien thoai phai gom dung 10 chu so! Nhap lai: ";
+                cout << "So dien thoai khong hop le! Nhap lai: ";
                 getline(cin, value);
             }
 

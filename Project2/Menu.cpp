@@ -61,13 +61,6 @@ void Menu::run() {
     } while (choice != 0);
 }
 
-void Menu::showMainMenu() {
-    cout << "\n===== MENU CHINH =====\n";
-    cout << "1. Admin\n";
-    cout << "2. Nhan vien\n";
-    cout << "0. Thoat\n";
-}
-
 void Menu::showAdminMenu() {
     int choice = -1;
 
